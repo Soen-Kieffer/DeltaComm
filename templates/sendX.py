@@ -33,7 +33,7 @@ class commandes():
     def get_info(self):
         """Retourne la liste des clients connectés."""
         self.connected_clients = get_connected_clients()
-        return f"!info:{','.join(self.connected_clients)};{SERVER_NAME};{IP}".encode("utf-8")
+        return f"!info:{','.join(self.connected_clients)};{SERVER_NAME};{IP};{PORT}".encode("utf-8")
     
     def get_commands(self):
         """Retourne le dictionnaire des commandes."""

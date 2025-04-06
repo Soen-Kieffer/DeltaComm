@@ -108,7 +108,9 @@ def receive(serv_socket, name):
                         namesC = data[0].split(",")
                         servName = data[1]
                         ip = data[2]
-                        print(f"Serveur : {servName} ({ip})")
+                        port = data[3]
+                        print("Voici les informations du serveur :")
+                        print(f"Serveur : {servName} ({ip}:{port})")
                         print("Voici les personnes connectées :")
                         for user in namesC:
                             print(f"    {user}")

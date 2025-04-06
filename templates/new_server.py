@@ -50,7 +50,8 @@ print(f"Les fichiers de configuration seront enregistrés dans : {conf_path}")
 shutil.copyfile("templates/serveur.py", os.path.join(conf_path, "serveur.py"))
 shutil.copyfile("templates/sendX.py", os.path.join(conf_path, "sendX.py"))
 shutil.copyfile("client.py", os.path.join(conf_path, "client.py"))
-shutil.copyfile("templates/README.txt", os.path.join(conf_path, "README.txt"))
+shutil.copyfile("README.md", os.path.join(conf_path, "README.md"))
+shutil.copyfile("LICENCE.txt", os.path.join(conf_path, "LICENCE.txt"))
 
 with open(os.path.join(conf_path, "launch.bat"), "w") as f:
     f.write(f"python {os.path.abspath(os.path.join(conf_path, 'serveur.py'))}")
@@ -67,7 +68,7 @@ with open(os.path.join(conf_path, "config.json"), "w") as f:
         "MAX_CONNECTIONS": int(max_conn)
     }, f, indent=4)
 print("Fichiers de configuration créés avec succès !")
-print("Vous pouvez maintenant lancer le serveur avec le fichier serveur.py.")
+print("Vous pouvez maintenant lancer le serveur avec le fichier launch.bat.")
 print("N'oubliez pas de lancer le client avec le fichier client.py.")
 print("Merci d'avoir utilisé l'assistant de création de serveur !")
 print("Appuyez sur ENTRER pour quitter.")

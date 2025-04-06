@@ -12,7 +12,7 @@ CommX est une application de messagerie conçue pour offrir une communication ra
     ```
     cd CommX
     ```
-3. Installer le serveur :
+3. Installer le serveur :\
     Windows:
     ```
     install.bat

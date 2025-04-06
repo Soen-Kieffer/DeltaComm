@@ -56,10 +56,13 @@ shutil.copyfile("client.py", os.path.join(conf_path, "client.py"))
 shutil.copyfile("README.md", os.path.join(conf_path, "README.md"))
 shutil.copyfile("LICENCE.txt", os.path.join(conf_path, "LICENCE.txt"))
 
-with open(os.path.join(conf_path, "launch.bat"), "w") as f:
-    f.write(f"python {os.path.abspath(os.path.join(conf_path, 'serveur.py'))}")
-with open(os.path.join(conf_path, "launch.sh"), "w") as f:
-    f.write(f"python3 {os.path.abspath(os.path.join(conf_path, 'serveur.py'))}")
+if os.name == 'nt':  # Windows
+    with open(os.path.join(conf_path, "launch.bat"), "w") as f:
+        f.write(f"python {os.path.abspath(os.path.join(conf_path, 'serveur.py'))}")
+else:  # Unix-based systems (Linux, macOS, etc.)
+    with open(os.path.join(conf_path, "launch.sh"), "w") as f:
+        f.write(f"python3 {os.path.abspath(os.path.join(conf_path, 'serveur.py'))}")
+        os.chmod(os.path.join(conf_path, "launch.sh"), 0o755)  # Make the script executable
 
 with open(os.path.join(conf_path, "config.json"), "w") as f:
     json.dump({

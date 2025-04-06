@@ -27,4 +27,4 @@ CommX est une application de messagerie conçue pour offrir une communication ra
 Les contributions sont les bienvenues ! Veuillez soumettre une pull request ou ouvrir une issue pour signaler des bugs ou proposer des améliorations.
 
 ## Licence
-Ce projet est sous licence MIT. Consultez le fichier `LICENSE` pour plus de détails.
+Ce projet est sous licence Apache 2.0. Consultez le fichier `LICENSE` pour plus de détails.

@@ -12,21 +12,26 @@ CommX est une application de messagerie conçue pour offrir une communication ra
     ```
     cd CommX
     ```
-3. Installer le serveur :
+3. Installer le serveur :\
     Windows:
     ```
-    install.bat
+    .\install.bat\
     ```
     Unix:
-    '''
-    sudo install.sh
-    '''
+    ```
+    sudo .\install.sh\
+    ```
 Pour connecter le serveur à Internet, activez la redirection de port sur votre routeur
 ## Utilisation
-1. Lancer le serveur :
+1. Lancer le serveur :\
+    windows:
    ```
    launch.bat
    ```
+    UNIX:
+    ```
+    sudo .\launch.sh\
+    ```
 
 ## Contribution
 Les contributions sont les bienvenues ! Veuillez soumettre une pull request ou ouvrir une issue pour signaler des bugs ou proposer des améliorations.

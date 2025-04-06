@@ -18,9 +18,9 @@ CommX est une application de messagerie conçue pour offrir une communication ra
     install.bat
     ```
     Unix:
-    '''
+    ```
     install.sh
-    '''
+    ```
 Pour connecter le serveur à Internet, activez la redirection de port sur votre routeur
 ## Utilisation
 1. Lancer le serveur :

@@ -1,13 +1,7 @@
 # CommX
 
 ## Description
-CommX est une application de messagerie conçue pour offrir une communication rapide et sécurisée entre les utilisateurs.
-
-## Fonctionnalités
-- Envoi et réception de messages en temps réel.
-- Gestion des contacts et des groupes.
-- Notifications pour les nouveaux messages.
-- Interface utilisateur intuitive et réactive.
+CommX est une application de messagerie conçue pour offrir une communication rapide directement depuis la console.
 
 ## Installation
 1. Clonez le dépôt :

@@ -1,0 +1,8 @@
+{
+    "HOSTNAME": "IP or AUTO",
+    "PORT": 8888,
+    "BUFFER_SIZE": 1024,
+    "SERVER_NAME": "SERVER_NAME",
+    "WELCOME_MESSAGE": "",
+    "MAX_CONNECTIONS": 10
+}

@@ -1,4 +1,4 @@
-# MessagerieV2
+# CommX
 
 ## Description
 MessagerieV2 est une application de messagerie conçue pour offrir une communication rapide et sécurisée entre les utilisateurs.

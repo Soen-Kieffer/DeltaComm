@@ -1,0 +1,1 @@
+python3 templates/new_server.py

@@ -50,7 +50,6 @@ class commandes():
 
     def receive_file(self):
         """Gère la réception de fichiers."""
-        print("Réception de fichier...")
         trans_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         trans_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Fix: Allow port reuse
         trans_socket.bind((HOSTNAME, PORT + 1))
@@ -60,7 +59,6 @@ class commandes():
         # Recevoir la taille du nom du fichier
         fileNameSize = int.from_bytes(trans_client.recv(4), 'big')
         filename = trans_client.recv(fileNameSize).decode("utf-8")  # Recevoir le nom du fichier
-        print(f"filename : {filename}")
         tempFile.append(filename)
         
         # Recevoir le contenu du fichier
@@ -73,8 +71,8 @@ class commandes():
         
         with open(os.path.join("temp", filename), "wb") as f:
             f.write(content)  # Écrire le contenu du fichier
-        print(f"Fichier reçu : {filename}")
         broadcast(f"Fichier disponible : {filename};serveur", exclude_client=self.client)
+        print(f"Fichier {filename} reçu et enregistré.")
         self.client.send(f"OK; serveur".encode("utf-8"))
         trans_client.close()
         trans_socket.close()
@@ -95,7 +93,6 @@ class commandes():
         trans_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         trans_socket.bind((HOSTNAME, PORT + 1))
         trans_socket.listen(1)
-        print("En attente de connexion pour l'envoi de fichier...")
         trans_client, addr = trans_socket.accept()
 
         file_name = trans_client.recv(1024).decode("utf-8")  # Recevoir la demande de fichier

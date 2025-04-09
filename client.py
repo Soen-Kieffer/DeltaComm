@@ -5,16 +5,16 @@ import sys
 import time
 
 # Constantes
-SERVEUR_HOSTNAME = "127.0.0.1"  # IP du serveur
+SERVEUR_HOSTNAME = "192.168.1.38"  # IP du serveur
 PORT = 8888  # Port du serveur
-BUFFER_SIZE = 1024  # Taille du buffer pour les transferts de fichiers
+BUFFER_SIZE = 1024
 
 class Commandes:
     def __init__(self, serv_socket):
         """Initialise la classe avec une socket serveur."""
         self.serv_socket = serv_socket
 
-        # Dictionnaire des commandes après la définition des méthodes
+        # Dictionnaire des commandes
         self.liste = {
             "!quit": self.bye,
             "!hello": self.hello,
@@ -22,7 +22,7 @@ class Commandes:
             "!help": self._help,
             "!clear": self.clear,
             "!file": self._file,
-            "!file_liste": self.file_liste,
+            "!file_list": self.file_liste,
             "!get_file": self.get_file,
         }
 
@@ -33,7 +33,7 @@ class Commandes:
         "!help: afficher les commandes disponibles",
         "!clear: effacer l'écran",
         "!file: envoyer un fichier",
-        "!file_liste: lister les fichiers disponibles",
+        "!file_list: lister les fichiers disponibles",
         "!get_file: télécharger un fichier",
     ]
 
@@ -42,7 +42,6 @@ class Commandes:
         print("Voici les commandes disponibles :")
         for cmd in self.commandes_help:
             print(f"    {cmd}")
-        print("Entrez une commande pour l'exécuter.")
 
     def clear(self):
         """Effacer l'écran."""
@@ -55,7 +54,7 @@ class Commandes:
 
     def hello(self):
         """Envoyer un message de salutation au serveur."""
-        self.serv_socket.send("Salut tout le monde !".encode("utf-8"))
+        self.serv_socket.send("Bonjour à tous !".encode("utf-8"))
 
     def get_info(self):
         """Envoyer une demande d'informations au serveur."""
@@ -75,7 +74,6 @@ class Commandes:
             # Ouvrir une connexion socket pour le transfert
             trans_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             trans_socket.connect((SERVEUR_HOSTNAME, PORT + 1))
-            print("Connexion au serveur de transfert établie.")
             # Envoyer la taille du nom du fichier
             fileNameSize = len(fileName).to_bytes(4, 'big')
             trans_socket.send(fileNameSize)
@@ -93,7 +91,7 @@ class Commandes:
 
     def file_liste(self):
         """Envoyer une demande de liste de fichiers au serveur."""
-        self.serv_socket.send("!file_liste".encode("utf-8"))
+        self.serv_socket.send("!file_list".encode("utf-8"))
     def get_file(self):
         fileName = input("Quel est le nom du fichier ? >>> ")
         self.serv_socket.send("!ask_file".encode("utf-8"))
@@ -102,11 +100,15 @@ class Commandes:
         trans_socket.send(fileName.encode("utf-8"))
         reponse = trans_socket.recv(1024).decode("utf-8")
         if reponse == "OK":
-            print("Le fichier est disponible.")
             content = trans_socket.recv(1024)
-            file_path = os.path.join("received", fileName)
-            if not os.path.exists("received"):
-                os.makedirs("received")
+            file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "received", fileName))
+            dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__),"received"))
+            if not os.path.exists(dir_path):
+                try:
+                    os.makedirs(dir_path, exist_ok=True)
+                except PermissionError:
+                    print("Erreur : Impossible de créer le dossier 'received'. Vérifiez les permissions.")
+                    return
             with open(file_path, "wb") as f:
                 f.write(content)
             print(f"Fichier {fileName} téléchargé avec succès.")
@@ -180,6 +182,8 @@ def receive(serv_socket, name):
                             print("Voici les fichiers disponibles :")
                             for i in data:
                                 print(f"    {i}")
+                else:
+                    print("Erreur : commande inconnue.")
             else:
                 contenu, sender = message.split(";")
                 if sender != name.decode("utf-8"):

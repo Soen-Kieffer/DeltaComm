@@ -2,6 +2,7 @@ import os
 import json
 import shutil
 import time
+placeholder = {"é": "e", "è": "e", "ê": "e", "ë": "e", "ô": "o", "ö": "o", "ç": "c", "à": "a", "â": "a", "î": "i", "ï": "i", "û": "u", "ü": "u", "ô": "o", "œ": "oe", "É": "E", "È": "E", "Ê": "E", "Ë": "E", "Ô": "O", "Ö": "O", "Ç": "C", "À": "A", "Â": "A", "Î": "I", "Ï": "I", "Û": "U", "Ü": "U", "Ô": "O", "Œ": "OE"," ": "_"}
 
 print("Bienvenue sur l'assitant de création de serveur de communication !")
 
@@ -14,7 +15,6 @@ while name is None or name == "":
         time.sleep(0.1)
 
     else:
-        placeholder = {"é": "e", "è": "e", "ê": "e", "ë": "e", "ô": "o", "ö": "o", "ç": "c", "à": "a", "â": "a", "î": "i", "ï": "i", "û": "u", "ü": "u", "ô": "o", "œ": "oe", "É": "E", "È": "E", "Ê": "E", "Ë": "E", "Ô": "O", "Ö": "O", "Ç": "C", "À": "A", "Â": "A", "Î": "I", "Ï": "I", "Û": "U", "Ü": "U", "Ô": "O", "Œ": "OE"," ": "_"}
         for key, value in placeholder.items():
             name = name.replace(key, value)
 time.sleep(0.1)
@@ -62,7 +62,6 @@ time.sleep(0.1)
 
 print("où voulez-vous enregistrer les fichiers de configuration ?")
 conf_path = input(">>> ")
-placeholder = {"é": "e", "è": "e", "ê": "e", "ë": "e", "ô": "o", "ö": "o", "ç": "c", "à": "a", "â": "a", "î": "i", "ï": "i", "û": "u", "ü": "u", "ô": "o", "œ": "oe", "É": "E", "È": "E", "Ê": "E", "Ë": "E", "Ô": "O", "Ö": "O", "Ç": "C", "À": "A", "Â": "A", "Î": "I", "Ï": "I", "Û": "U", "Ü": "U", "Ô": "O", "Œ": "OE"," ": "_"}
 for key, value in placeholder.items():
     conf_path = conf_path.replace(key, value)
 if not conf_path:

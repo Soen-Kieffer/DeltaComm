@@ -1,6 +1,7 @@
 import socket
 from threading import Thread
 import json
+import os
 
 try:
     with open("config.json", "r") as f:
@@ -21,14 +22,24 @@ MAX_CLIENTS = config["MAX_CONNECTIONS"]
 # Listes globales
 clients = []  # [(socket, name)]
 message_queue = []  # [(message, sender)]
+os.makedirs(os.path.join(os.path.dirname(__file__), "temp"), exist_ok=True)
+tempFile = [f for f in os.listdir("temp") if os.path.isfile(os.path.join("temp", f))]
+
+
 
 class commandes():
     """Classe pour gérer les commandes spéciales."""
 
-    def __init__(self):
+    def __init__(self, requestBin, client):
         self.commands = {
             "!info": self.get_info,
+            "!file_send": self.receive_file,
+            "!file_list": self.send_file_liste,
+            "!ask_file": self.send_file,
         }
+        self.request = requestBin.decode("utf-8")
+        self.requestBinary = requestBin
+        self.client = client
 
     def get_info(self):
         """Retourne la liste des clients connectés."""
@@ -38,7 +49,35 @@ class commandes():
     def get_commands(self):
         """Retourne le dictionnaire des commandes."""
         return self.commands
-
+    def receive_file(self):
+        """Gère la réception de fichiers."""
+        request = self.request.split(":")[1]
+        filename = request.split(";")[0]
+        tempFile.append(filename)
+        content = request.split(";")[1]
+        with open(os.path.join("temp",filename), "wb") as f:
+            f.write(content.encode("utf-8"))
+        print(f"Fichier reçu : {filename}")
+        broadcast(f"Fichier disponible : {filename};serveur", exclude_client=self.client)
+        return "File received successfully.; serveur".encode("utf-8")
+    def send_file_liste(self):
+        """Retourne la liste des fichiers disponibles."""
+        if len(tempFile) == 0:
+            self.client.send(f"!availble:NO".encode("utf-8"))
+            return None
+        else:
+            files = ";".join(tempFile)
+            self.client.send(f"!availble:{files}".encode("utf-8"))
+            return None
+    def send_file(self):
+        request = self.request.split(":")[1]
+        filename = request
+        print(request)
+        if filename in tempFile:
+            with open(os.path.join("temp", filename), "rb") as f:
+                content = f.read()
+                self.client.send(f"!file_send:{filename};{content.decode('utf-8')}".encode("utf-8"))
+            return None
 def encode_list(lst):
     """Encode une liste en chaîne UTF-8 séparée par des ';'."""
     return ";".join(lst).encode("utf-8")
@@ -59,7 +98,6 @@ def broadcast(message, exclude_client=None):
 def get_connected_clients():
     """Retourne une liste des noms des clients connectés."""
     lst = [name for _, name in clients]
-    print(lst)
     return lst
 
 def find_client_by_name(name):
@@ -73,20 +111,25 @@ def handle_client(client, name):
     """Gère la communication avec un client."""
     while True:
         try:
-            request = client.recv(BUFFER_SIZE).decode("utf-8")
+            request = client.recv(BUFFER_SIZE)
+            requestBinary = request
+            request = request.decode("utf-8")
             if not request:
                 raise ConnectionResetError
             
             else:
                 if request.startswith("!"):
-                    cmdInstance = commandes()
+                    cmdInstance = commandes(requestBinary, client)
                     cmd = cmdInstance.get_commands()
-                    if request in cmd:
-                        request = cmd[request]()
-                        if type(request) == bytes:
-                            client.send(request)
+                    commande = request.split(":")[0]
+                    print(commande)
+                    if commande in cmd:
+                        if commande in cmd:
+                            result = cmd[commande]()
+                            if result is not None:
+                                client.send(result)
                         else:
-                            client.send(request.encode("utf-8"))
+                            client.send("!unknown".encode("utf-8"))
                     else:
                         client.send("!unknown".encode("utf-8"))
                 else:

@@ -4,7 +4,8 @@ import os
 import sys
 
 # Constantes
-SERVEUR_HOSTNAME = "192.168.1.38"  # IP du serveur
+SERVEUR_HOSTNAME = input("ip du serveur >>>")  # IP du serveur
+
 PORT = 8888  # Port du serveur
 
 class Commandes:
@@ -19,6 +20,9 @@ class Commandes:
             "!getInfo": self.get_info,
             "!help": self._help,
             "!clear": self.clear,
+            "!file": self._file,
+            "!file_liste": self.file_liste,
+            "!get_file": self.get_file,
         }
 
     commandes_help = [
@@ -27,6 +31,7 @@ class Commandes:
         "!getInfo: obtenir la liste des informations",
         "!help: afficher les commandes disponibles",
         "!clear: effacer l'écran",
+        "!file: envoyer un fichier (en cours de développement)",
     ]
 
     def _help(self):
@@ -53,7 +58,28 @@ class Commandes:
         """Envoyer une demande d'informations au serveur."""
         self.serv_socket.send("!info".encode("utf-8"))
 
-
+    def _file(self):
+        """Envoyer un fichier au serveur (fonctionnalité en cours de développement)."""
+        path = input("Quel est le nom du fichier ? >>> ")
+        fileName = os.path.basename(path)
+        if not os.path.isfile(path):
+            print("Le fichier n'existe pas.")
+            return
+        file = f"!file_send:{fileName};".encode("utf-8")
+        try:
+            with open(path, "rb") as f:
+                file += f.read()
+        except Exception as e:
+            print(f"Erreur lors de l'ouverture du fichier : {e}")
+            return
+        self.serv_socket.send(file)
+    def file_liste(self):
+        """Envoyer une liste de fichiers au serveur."""
+        self.serv_socket.send("!file_liste".encode("utf-8"))
+    def get_file(self):
+        """Envoyer une demande de fichier au serveur."""
+        fileName = input("Quel est le nom du fichier ? >>> ")
+        self.serv_socket.send(f"!ask_file:{fileName}".encode("utf-8"))
 def decodeLst(encodedLst):
     """Décoder une liste encodée en UTF-8."""
     return encodedLst.decode("utf-8").split(";")
@@ -114,6 +140,21 @@ def receive(serv_socket, name):
                         print("Voici les personnes connectées :")
                         for user in namesC:
                             print(f"    {user}")
+                    if command == "!availble":
+                        if data[0] == "NO":
+                            print("aucun fichier disponible")
+                        else:
+                            print("Voici les fichiers disponibles :")
+                            for i in data:
+                                print(f"    {i}")
+                    if command == "!file_send":
+                        fileName = data[0]
+                        file = data[1].encode("utf-8")
+                        os.makedirs(os.path.join(os.path.dirname(__file__), "received"), exist_ok=True)
+                        path = os.path.join(os.path.dirname(__file__), "received", fileName)
+                        with open(path, "xb") as f:
+                            f.write(file)
+                        print(f"Fichier {fileName} reçu.")
                 else:
                     print("Commande inconnue.")
             else:
@@ -132,6 +173,7 @@ try:
     servSocket.connect((SERVEUR_HOSTNAME, PORT))
 except Exception as e:
     print(f"Serveur indisponible : {e}")
+    print("L'ip est peut-être incorrecte")
     input("Appuyez sur ENTRER pour quitter.")
     exit()
 

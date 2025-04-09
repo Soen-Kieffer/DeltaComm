@@ -25,8 +25,6 @@ message_queue = []  # [(message, sender)]
 os.makedirs(os.path.join(os.path.dirname(__file__), "temp"), exist_ok=True)
 tempFile = [f for f in os.listdir("temp") if os.path.isfile(os.path.join("temp", f))]
 
-
-
 class commandes():
     """Classe pour gérer les commandes spéciales."""
 
@@ -49,17 +47,39 @@ class commandes():
     def get_commands(self):
         """Retourne le dictionnaire des commandes."""
         return self.commands
+
     def receive_file(self):
         """Gère la réception de fichiers."""
-        request = self.request.split(":")[1]
-        filename = request.split(";")[0]
+        print("Réception de fichier...")
+        trans_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        trans_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Fix: Allow port reuse
+        trans_socket.bind((HOSTNAME, PORT + 1))
+        trans_socket.listen(1)
+        trans_client, addr = trans_socket.accept()
+        
+        # Recevoir la taille du nom du fichier
+        fileNameSize = int.from_bytes(trans_client.recv(4), 'big')
+        filename = trans_client.recv(fileNameSize).decode("utf-8")  # Recevoir le nom du fichier
+        print(f"filename : {filename}")
         tempFile.append(filename)
-        content = request.split(";")[1]
-        with open(os.path.join("temp",filename), "wb") as f:
-            f.write(content.encode("utf-8"))
+        
+        # Recevoir le contenu du fichier
+        content = b""
+        while True:
+            chunk = trans_client.recv(BUFFER_SIZE)
+            if not chunk:
+                break
+            content += chunk
+        
+        with open(os.path.join("temp", filename), "wb") as f:
+            f.write(content)  # Écrire le contenu du fichier
         print(f"Fichier reçu : {filename}")
         broadcast(f"Fichier disponible : {filename};serveur", exclude_client=self.client)
-        return "File received successfully.; serveur".encode("utf-8")
+        self.client.send(f"OK; serveur".encode("utf-8"))
+        trans_client.close()
+        trans_socket.close()
+        return None
+
     def send_file_liste(self):
         """Retourne la liste des fichiers disponibles."""
         if len(tempFile) == 0:
@@ -69,15 +89,24 @@ class commandes():
             files = ";".join(tempFile)
             self.client.send(f"!availble:{files}".encode("utf-8"))
             return None
+
     def send_file(self):
-        request = self.request.split(":")[1]
-        filename = request
-        print(request)
-        if filename in tempFile:
-            with open(os.path.join("temp", filename), "rb") as f:
+        """Envoie un fichier à un client."""
+        trans_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        trans_socket.bind((HOSTNAME, PORT + 1))
+        trans_socket.listen(1)
+        print("En attente de connexion pour l'envoi de fichier...")
+        trans_client, addr = trans_socket.accept()
+
+        file_name = trans_client.recv(1024).decode("utf-8")  # Recevoir la demande de fichier
+        if file_name in tempFile:
+            trans_client.send("OK".encode("utf-8"))
+            file_path = os.path.join("temp", file_name)
+            with open(file_path, "rb") as f:
                 content = f.read()
-                self.client.send(f"!file_send:{filename};{content.decode('utf-8')}".encode("utf-8"))
-            return None
+            trans_client.send(content)
+        else:
+            trans_client.send("NO".encode("utf-8"))
 def encode_list(lst):
     """Encode une liste en chaîne UTF-8 séparée par des ';'."""
     return ";".join(lst).encode("utf-8")
@@ -122,14 +151,12 @@ def handle_client(client, name):
                     cmdInstance = commandes(requestBinary, client)
                     cmd = cmdInstance.get_commands()
                     commande = request.split(":")[0]
-                    print(commande)
+                    print(f"commande:{commande}")
                     if commande in cmd:
-                        if commande in cmd:
-                            result = cmd[commande]()
-                            if result is not None:
-                                client.send(result)
-                        else:
-                            client.send("!unknown".encode("utf-8"))
+                        print("commande ok")
+                        result = cmd[commande]()
+                        if result is not None:
+                            client.send(result)
                     else:
                         client.send("!unknown".encode("utf-8"))
                 else:
@@ -139,7 +166,6 @@ def handle_client(client, name):
             clients.remove((client, name))
             broadcast(f"{name} a quitté la discussion !;serveur")
             break
-
 
 def process_messages():
     """Thread pour traiter les messages en file d'attente."""

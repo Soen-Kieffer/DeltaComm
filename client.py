@@ -2,11 +2,12 @@ import socket
 from threading import Thread
 import os
 import sys
+import time
 
 # Constantes
-SERVEUR_HOSTNAME = input("ip du serveur >>>")  # IP du serveur
-
+SERVEUR_HOSTNAME = "127.0.0.1"  # IP du serveur
 PORT = 8888  # Port du serveur
+BUFFER_SIZE = 1024  # Taille du buffer pour les transferts de fichiers
 
 class Commandes:
     def __init__(self, serv_socket):
@@ -31,7 +32,9 @@ class Commandes:
         "!getInfo: obtenir la liste des informations",
         "!help: afficher les commandes disponibles",
         "!clear: effacer l'écran",
-        "!file: envoyer un fichier (en cours de développement)",
+        "!file: envoyer un fichier",
+        "!file_liste: lister les fichiers disponibles",
+        "!get_file: télécharger un fichier",
     ]
 
     def _help(self):
@@ -59,64 +62,82 @@ class Commandes:
         self.serv_socket.send("!info".encode("utf-8"))
 
     def _file(self):
-        """Envoyer un fichier au serveur (fonctionnalité en cours de développement)."""
+        """Envoyer un fichier au serveur."""
         path = input("Quel est le nom du fichier ? >>> ")
-        fileName = os.path.basename(path)
         if not os.path.isfile(path):
             print("Le fichier n'existe pas.")
             return
-        file = f"!file_send:{fileName};".encode("utf-8")
+
+        fileName = os.path.basename(path)
         try:
+            self.serv_socket.send("!file_send".encode("utf-8"))
+
+            # Ouvrir une connexion socket pour le transfert
+            trans_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            trans_socket.connect((SERVEUR_HOSTNAME, PORT + 1))
+            print("Connexion au serveur de transfert établie.")
+            # Envoyer la taille du nom du fichier
+            fileNameSize = len(fileName).to_bytes(4, 'big')
+            trans_socket.send(fileNameSize)
+            trans_socket.send(fileName.encode("utf-8"))
+
+            # Envoyer le contenu du fichier
             with open(path, "rb") as f:
-                file += f.read()
+                while chunk := f.read(BUFFER_SIZE):
+                    trans_socket.send(chunk)
+
+            print(f"Fichier {fileName} envoyé avec succès.")
+            trans_socket.close()
         except Exception as e:
-            print(f"Erreur lors de l'ouverture du fichier : {e}")
-            return
-        self.serv_socket.send(file)
+            print(f"Erreur lors de l'envoi du fichier : {e}")
+
     def file_liste(self):
-        """Envoyer une liste de fichiers au serveur."""
+        """Envoyer une demande de liste de fichiers au serveur."""
         self.serv_socket.send("!file_liste".encode("utf-8"))
     def get_file(self):
-        """Envoyer une demande de fichier au serveur."""
         fileName = input("Quel est le nom du fichier ? >>> ")
-        self.serv_socket.send(f"!ask_file:{fileName}".encode("utf-8"))
+        self.serv_socket.send("!ask_file".encode("utf-8"))
+        trans_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        trans_socket.connect((SERVEUR_HOSTNAME, PORT + 1))
+        trans_socket.send(fileName.encode("utf-8"))
+        reponse = trans_socket.recv(1024).decode("utf-8")
+        if reponse == "OK":
+            print("Le fichier est disponible.")
+            content = trans_socket.recv(1024)
+            file_path = os.path.join("received", fileName)
+            if not os.path.exists("received"):
+                os.makedirs("received")
+            with open(file_path, "wb") as f:
+                f.write(content)
+            print(f"Fichier {fileName} téléchargé avec succès.")
+        else:
+            print("Le fichier n'est pas disponible.")
+            trans_socket.close()
+            return None
+
+
 def decodeLst(encodedLst):
     """Décoder une liste encodée en UTF-8."""
     return encodedLst.decode("utf-8").split(";")
-
 
 def send(serv_socket, commandes):
     """Thread pour envoyer des messages au serveur."""
     while True:
         try:
-            def clear_input_line():
-                """Efface la ligne actuelle dans la console."""
-                sys.stdout.write("\033[K")
-                sys.stdout.flush()
-
-            def move_cursor_to_bottom():
-                """Déplace le curseur en bas de l'écran."""
-                rows, _ = os.get_terminal_size()
-                sys.stdout.write(f"\033[{rows};0H")
-                sys.stdout.flush()
-
-            while True:
-                move_cursor_to_bottom()
-                clear_input_line()
-                brutInput = input("")
-                if brutInput.startswith("!"):
-                    if brutInput in commandes.liste:
-                        try:
-                            commandes.liste[brutInput]()
-                        except Exception as e:
-                            print(f"Erreur lors de l'exécution de la commande : {e}")
-                    else:
-                        serv_socket.send(brutInput.encode("utf-8"))
+            brutInput = input("")
+            if brutInput.startswith("!"):
+                if brutInput in commandes.liste:
+                    try:
+                        commandes.liste[brutInput]()
+                    except Exception as e:
+                        print(f"Erreur lors de l'exécution de la commande : {e}")
                 else:
-                    if ";" in brutInput:
-                        print("Le caractère ';' n'est pas accepté.")
-                    else:
-                        serv_socket.send(brutInput.encode("utf-8"))
+                    serv_socket.send(brutInput.encode("utf-8"))
+            else:
+                if ";" in brutInput:
+                    print("Le caractère ';' n'est pas accepté.")
+                else:
+                    serv_socket.send(brutInput.encode("utf-8"))
         except Exception as e:
             print(f"Erreur lors de l'envoi : {e}")
             break
@@ -142,25 +163,25 @@ def receive(serv_socket, name):
                             print(f"    {user}")
                     if command == "!availble":
                         if data[0] == "NO":
-                            print("aucun fichier disponible")
+                            print("Aucun fichier disponible.")
                         else:
                             print("Voici les fichiers disponibles :")
                             for i in data:
                                 print(f"    {i}")
-                    if command == "!file_send":
-                        fileName = data[0]
-                        file = data[1].encode("utf-8")
-                        os.makedirs(os.path.join(os.path.dirname(__file__), "received"), exist_ok=True)
-                        path = os.path.join(os.path.dirname(__file__), "received", fileName)
-                        with open(path, "xb") as f:
-                            f.write(file)
-                        print(f"Fichier {fileName} reçu.")
-                else:
-                    print("Commande inconnue.")
             else:
                 contenu, sender = message.split(";")
                 if sender != name.decode("utf-8"):
                     print(f"{sender}: {contenu}")
+        except ValueError:
+            if message == "READY":
+                pass
+            else:
+                print("Erreur de format du message reçu.")
+        except KeyboardInterrupt:
+            print("\nDéconnexion du serveur.")
+            serv_socket.send("!quit".encode("utf-8"))
+            serv_socket.close()
+            break
         except Exception as e:
             print(f"Déconnexion : {e}")
             break
@@ -173,7 +194,6 @@ try:
     servSocket.connect((SERVEUR_HOSTNAME, PORT))
 except Exception as e:
     print(f"Serveur indisponible : {e}")
-    print("L'ip est peut-être incorrecte")
     input("Appuyez sur ENTRER pour quitter.")
     exit()
 

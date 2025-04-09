@@ -32,7 +32,8 @@ Pour connecter le serveur à Internet, activez la redirection de port sur votre 
     ```
     sudo .\launch.sh\
     ```
-
+2. Utilisation du client:\
+   Modifiez la variable SERVEUR_HOSTNAME par l'addresse ip du serveur dont vous souhaitez accéder
 ## Contribution
 Les contributions sont les bienvenues ! Veuillez soumettre une pull request ou ouvrir une issue pour signaler des bugs ou proposer des améliorations.
 

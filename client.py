@@ -122,8 +122,20 @@ def decodeLst(encodedLst):
 
 def send(serv_socket, commandes):
     """Thread pour envoyer des messages au serveur."""
+    def clear_input_line():
+        """Efface la ligne actuelle dans la console."""
+        sys.stdout.write("\033[K")
+        sys.stdout.flush()
+ 
+    def move_cursor_to_bottom():
+        """Déplace le curseur en bas de l'écran."""
+        rows, _ = os.get_terminal_size()
+        sys.stdout.write(f"\033[{rows};0H")
+        sys.stdout.flush()
     while True:
         try:
+            clear_input_line()
+            move_cursor_to_bottom()
             brutInput = input("")
             if brutInput.startswith("!"):
                 if brutInput in commandes.liste:

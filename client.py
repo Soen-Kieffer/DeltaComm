@@ -3,11 +3,17 @@ from threading import Thread
 import os
 import sys
 from datetime import *
+from plyer import notification
+import ctypes
+
+
 
 # Constantes
 SERVEUR_HOSTNAME = "192.168.1.38"  # IP du serveur
 PORT = 8888  # Port du serveur
 BUFFER_SIZE = 1024
+
+background = False
 
 logs_path = os.path.abspath(os.path.join(os.path.dirname(__file__),"logs"))
 date = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
@@ -133,7 +139,13 @@ class Commandes:
             print("Le fichier n'est pas disponible.")
             trans_socket.close()
             return None
-
+    def background(self, state):
+        """Envoyer un message pour activer le mode background."""
+        global background
+        if state:
+            background = True
+        else:
+            background = False
 
 def decodeLst(encodedLst):
     """Décoder une liste encodée en UTF-8."""
@@ -147,6 +159,19 @@ def saveLogs(message):
     except Exception as e:
         print(f"Erreur lors de la sauvegarde des logs : {e}")
 
+def notif(name, message):
+    """Afficher une notification."""
+    notification.notify(
+        title=f"Nouveau message de {name}",
+        message=message,
+        app_name="CommX",
+        timeout=5,
+    )
+def is_focus():
+    GetForegroundWindow = ctypes.windll.user32.GetForegroundWindow
+    GetConsoleWindow = ctypes.windll.kernel32.GetConsoleWindow
+
+    return GetForegroundWindow() == GetConsoleWindow()
 def send(serv_socket, commandes):
     """Thread pour envoyer des messages au serveur."""
     def clear_input_line():
@@ -202,6 +227,7 @@ def receive(serv_socket, name):
                         print("Voici les personnes connectées :")
                         for user in namesC:
                             print(f"    {user}")
+
                     if command == "!availble":
                         saveLogs("Display available files")
                         if data[0] == "NO":
@@ -216,7 +242,10 @@ def receive(serv_socket, name):
                 contenu, sender = message.split(";")
                 if sender != name.decode("utf-8"):
                     saveLogs(f"{sender}: {contenu}")
-                    print(f"{sender}: {contenu}")
+                    if background:
+                        notif(sender, contenu)
+                    else:
+                        print(f"{sender}: {contenu}")
         except ValueError:
             if message == "READY":
                 pass
@@ -230,6 +259,14 @@ def receive(serv_socket, name):
         except Exception as e:
             print(f"Déconnexion : {e}")
             break
+
+def main():
+    cmdMain = Commandes(servSocket)
+    while True:
+        if is_focus():
+            cmdMain.background(False)
+        else:
+            cmdMain.background(True)
 
 # Connexion au serveur
 nameBrut = input("Quel est votre nom ? >>> ")
@@ -277,7 +314,9 @@ commandes = Commandes(servSocket)
 # Lancement des threads
 recpt = Thread(target=receive, args=(servSocket, name), daemon=True)
 sending = Thread(target=send, args=(servSocket, commandes), daemon=True)
+main_thread = Thread(target=main, daemon=True)
 
+main_thread.start()
 recpt.start()
 sending.start()
 

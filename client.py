@@ -2,12 +2,26 @@ import socket
 from threading import Thread
 import os
 import sys
-import time
+from datetime import *
 
 # Constantes
 SERVEUR_HOSTNAME = "192.168.1.38"  # IP du serveur
 PORT = 8888  # Port du serveur
 BUFFER_SIZE = 1024
+
+logs_path = os.path.abspath(os.path.join(os.path.dirname(__file__),"logs"))
+date = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
+date_path = os.path.abspath(os.path.join(os.path.dirname(__file__),"logs",f"{date}.log"))
+if not os.path.exists(logs_path):
+    try:
+        os.makedirs(logs_path, exist_ok=True)
+    except PermissionError:
+        print("Erreur : Impossible de créer le dossier 'logs'. Vérifiez les permissions.")
+with open(date_path, "x") as f:
+    f.write(f"Logs du {date}\n")
+    f.write("Voici les logs de la session :\n")
+    f.write("========================================\n")
+
 
 class Commandes:
     def __init__(self, serv_socket):
@@ -36,7 +50,7 @@ class Commandes:
         "!file_list: lister les fichiers disponibles",
         "!get_file: télécharger un fichier",
     ]
-
+    
     def _help(self):
         """Afficher les commandes disponibles."""
         print("Voici les commandes disponibles :")
@@ -85,9 +99,11 @@ class Commandes:
                     trans_socket.send(chunk)
 
             print(f"Fichier {fileName} envoyé avec succès.")
+            saveLogs(f"Fichier {fileName} envoyé avec succès.")
             trans_socket.close()
         except Exception as e:
             print(f"Erreur lors de l'envoi du fichier : {e}")
+            saveLogs(f"Erreur lors de l'envoi du fichier : {e}")
 
     def file_liste(self):
         """Envoyer une demande de liste de fichiers au serveur."""
@@ -112,6 +128,7 @@ class Commandes:
             with open(file_path, "wb") as f:
                 f.write(content)
             print(f"Fichier {fileName} téléchargé avec succès.")
+            saveLogs(f"Fichier {fileName} téléchargé avec succès.")
         else:
             print("Le fichier n'est pas disponible.")
             trans_socket.close()
@@ -121,6 +138,14 @@ class Commandes:
 def decodeLst(encodedLst):
     """Décoder une liste encodée en UTF-8."""
     return encodedLst.decode("utf-8").split(";")
+
+def saveLogs(message):
+    """Sauvegarder les messages dans un fichier de log."""
+    try:
+        with open(date_path, "a") as f:
+            f.write(f"{message}\n")
+    except Exception as e:
+        print(f"Erreur lors de la sauvegarde des logs : {e}")
 
 def send(serv_socket, commandes):
     """Thread pour envoyer des messages au serveur."""
@@ -139,6 +164,7 @@ def send(serv_socket, commandes):
             clear_input_line()
             move_cursor_to_bottom()
             brutInput = input("")
+            saveLogs(f"you: {brutInput}")
             if brutInput.startswith("!"):
                 if brutInput in commandes.liste:
                     try:
@@ -166,6 +192,7 @@ def receive(serv_socket, name):
                     command, *data = message.split(":")
                     data = data[0].split(";")
                     if command == "!info":
+                        saveLogs("Display info")
                         namesC = data[0].split(",")
                         servName = data[1]
                         ip = data[2]
@@ -176,6 +203,7 @@ def receive(serv_socket, name):
                         for user in namesC:
                             print(f"    {user}")
                     if command == "!availble":
+                        saveLogs("Display available files")
                         if data[0] == "NO":
                             print("Aucun fichier disponible.")
                         else:
@@ -187,6 +215,7 @@ def receive(serv_socket, name):
             else:
                 contenu, sender = message.split(";")
                 if sender != name.decode("utf-8"):
+                    saveLogs(f"{sender}: {contenu}")
                     print(f"{sender}: {contenu}")
         except ValueError:
             if message == "READY":

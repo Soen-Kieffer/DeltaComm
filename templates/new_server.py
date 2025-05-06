@@ -1,8 +1,21 @@
 import os
+import sys
 import json
 import shutil
 import time
+import subprocess
+
+def install(package):
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+        return f"installation de {package} réussie"
+    except:
+        return f"l'installation de {package} a échouée (cela peux poser problème plus tard mais pour l'instant ne t'inquiète pas)"
+
+print(install("ctypes"))
+
 placeholder = {"é": "e", "è": "e", "ê": "e", "ë": "e", "ô": "o", "ö": "o", "ç": "c", "à": "a", "â": "a", "î": "i", "ï": "i", "û": "u", "ü": "u", "ô": "o", "œ": "oe", "É": "E", "È": "E", "Ê": "E", "Ë": "E", "Ô": "O", "Ö": "O", "Ç": "C", "À": "A", "Â": "A", "Î": "I", "Ï": "I", "Û": "U", "Ü": "U", "Ô": "O", "Œ": "OE"," ": "_"}
+
 
 print("Bienvenue sur l'assitant de création de serveur de communication !")
 
@@ -73,11 +86,12 @@ if not os.path.exists(conf_path):
     os.makedirs(conf_path)
 
 print(f"Les fichiers de configuration seront enregistrés dans : {conf_path}")
-shutil.copyfile("templates/serveur.py", os.path.join(conf_path, "serveur.py"))
-shutil.copyfile("templates/sendX.py", os.path.join(conf_path, "sendX.py"))
-shutil.copyfile("client.py", os.path.join(conf_path, "client.py"))
-shutil.copyfile("README.md", os.path.join(conf_path, "README.md"))
-shutil.copyfile("LICENCE.txt", os.path.join(conf_path, "LICENCE.txt"))
+print(os.path.abspath("templates/serveur.py"))
+shutil.copyfile(os.path.abspath("templates/serveur.py"), os.path.join(conf_path, "serveur.py"))
+shutil.copyfile(os.path.abspath("templates/sendX.py"), os.path.join(conf_path, "sendX.py"))
+shutil.copyfile(os.path.abspath("client.py"), os.path.join(conf_path, "client.py"))
+shutil.copyfile(os.path.abspath("README.md"), os.path.join(conf_path, "README.md"))
+shutil.copyfile(os.path.abspath("LICENCE.txt"), os.path.join(conf_path, "LICENCE.txt"))
 
 if os.name == 'nt':  # Windows
     with open(os.path.join(conf_path, "launch.bat"), "w") as f:

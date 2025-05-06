@@ -4,6 +4,7 @@ import json
 import shutil
 import time
 import subprocess
+import ctypes.wintypes
 
 def install(package):
     try:
@@ -12,7 +13,6 @@ def install(package):
     except:
         return f"l'installation de {package} a échouée (cela peux poser problème plus tard mais pour l'instant ne t'inquiète pas)"
 
-print(install("ctypes"))
 
 placeholder = {"é": "e", "è": "e", "ê": "e", "ë": "e", "ô": "o", "ö": "o", "ç": "c", "à": "a", "â": "a", "î": "i", "ï": "i", "û": "u", "ü": "u", "ô": "o", "œ": "oe", "É": "E", "È": "E", "Ê": "E", "Ë": "E", "Ô": "O", "Ö": "O", "Ç": "C", "À": "A", "Â": "A", "Î": "I", "Ï": "I", "Û": "U", "Ü": "U", "Ô": "O", "Œ": "OE"," ": "_"}
 

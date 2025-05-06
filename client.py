@@ -3,30 +3,7 @@ from threading import Thread
 import os
 import sys
 from datetime import *
-from plyer import notification
 import ctypes
-
-
-
-# Constantes
-SERVEUR_HOSTNAME = "192.168.1.38"  # IP du serveur
-PORT = 8888  # Port du serveur
-BUFFER_SIZE = 1024
-
-background = False
-
-logs_path = os.path.abspath(os.path.join(os.path.dirname(__file__),"logs"))
-date = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
-date_path = os.path.abspath(os.path.join(os.path.dirname(__file__),"logs",f"{date}.log"))
-if not os.path.exists(logs_path):
-    try:
-        os.makedirs(logs_path, exist_ok=True)
-    except PermissionError:
-        print("Erreur : Impossible de créer le dossier 'logs'. Vérifiez les permissions.")
-with open(date_path, "x") as f:
-    f.write(f"Logs du {date}\n")
-    f.write("Voici les logs de la session :\n")
-    f.write("========================================\n")
 
 
 class Commandes:
@@ -159,14 +136,6 @@ def saveLogs(message):
     except Exception as e:
         print(f"Erreur lors de la sauvegarde des logs : {e}")
 
-def notif(name, message):
-    """Afficher une notification."""
-    notification.notify(
-        title=f"Nouveau message de {name}",
-        message=message,
-        app_name="CommX",
-        timeout=5,
-    )
 def is_focus():
     GetForegroundWindow = ctypes.windll.user32.GetForegroundWindow
     GetConsoleWindow = ctypes.windll.kernel32.GetConsoleWindow
@@ -242,10 +211,7 @@ def receive(serv_socket, name):
                 contenu, sender = message.split(";")
                 if sender != name.decode("utf-8"):
                     saveLogs(f"{sender}: {contenu}")
-                    if background:
-                        notif(sender, contenu)
-                    else:
-                        print(f"{sender}: {contenu}")
+                    print(f"{sender}: {contenu}")
         except ValueError:
             if message == "READY":
                 pass
@@ -268,7 +234,73 @@ def main():
         else:
             cmdMain.background(True)
 
+
+#Initialisation des logs
+logs_path = os.path.abspath(os.path.join(os.path.dirname(__file__),"logs"))
+date = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
+date_path = os.path.abspath(os.path.join(os.path.dirname(__file__),"logs",f"{date}.log"))
+if not os.path.exists(logs_path):
+    try:
+        os.makedirs(logs_path, exist_ok=True)
+    except PermissionError:
+        print("Erreur : Impossible de créer le dossier 'logs'. Vérifiez les permissions.")
+with open(date_path, "x") as f:
+    f.write(f"Logs du {date}\n")
+    f.write("Voici les logs de la session :\n")
+    f.write("========================================\n")
+
+
+# Constantes
+SERVEUR_HOSTNAME = "192.168.1.38"  # IP du serveur
+PORT = 8888  # Port du serveur
+BUFFER_SIZE = 1024
+
+# Variables globales
+background = False
+new = False
+
+"""
+serv_list_path = os.path.abspath(os.path.join(os.path.dirname(__file__),"serv_list.txt"))
+if not os.path.exists(serv_list_path):
+    open(serv_list_path, "x").close()
+    print("Aucun serveur ne semble etre enregistré.")
+    print("Veuillez entrer l'adresse IP du serveur :")
+    SERVEUR_HOSTNAME = input(">>> ")
+    new = True
+else:
+    with open(serv_list_path, "r") as f:
+        lines = f.readlines()
+        if len(lines) == 0:
+            print("Aucun serveur ne semble etre enregistré.")
+            print("Veuillez entrer l'adresse IP du serveur :")
+            SERVEUR_HOSTNAME = input(">>> ")
+            new = True
+        else:
+            serv_list = []
+            for i in lines:
+                serv_list.append(i.split(";"))
+            print("Voici les serveurs enregistrés :")
+            print("0. Ajouter un nouveau serveur")
+            for i, serv in enumerate(serv_list):
+                print(f"{i + 1}. {serv[0]}")
+            print("Veuillez entrer le numéro du serveur:")
+            choix = int(input(">>> "))-1
+            if choix == -1:
+                print("Veuillez entrer l'adresse IP du serveur :")
+                SERVEUR_HOSTNAME = input(">>> ")
+                new = True
+            if choix < 0 or choix >= len(serv_list):
+                print("Numéro invalide.")
+                print("Veuillez entrer l'adresse IP du serveur :")
+                SERVEUR_HOSTNAME = input(">>> ")
+                new = True
+            else:
+                SERVEUR_HOSTNAME = serv_list[choix][1][:-1]
+                print(f"|{SERVEUR_HOSTNAME}|")
+"""
 # Connexion au serveur
+SERVEUR_HOSTNAME = "172.20.10.3"
+PORT = 8888
 nameBrut = input("Quel est votre nom ? >>> ")
 name = nameBrut.encode("utf-8")
 try:
@@ -301,6 +333,11 @@ else:
 # Affichage des utilisateurs connectés
 names = decodeLst(servSocket.recv(1024))
 servName, welcomeMessage = servSocket.recv(1024).decode("utf-8").split(";")
+"""
+if new:
+    with open(serv_list_path, "a") as f:
+        f.write(f"{servName};{SERVEUR_HOSTNAME}\n")
+"""
 print(f"Serveur : {servName}")
 print(f"{welcomeMessage}")
 print("Voici les personnes connectées :")

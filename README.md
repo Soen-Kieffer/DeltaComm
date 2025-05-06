@@ -1,16 +1,16 @@
-# CommX
+# DeltaComm
 
 ## Description
-CommX est une application de messagerie conçue pour offrir une communication rapide directement depuis la console.
+DeltaComm est une application de messagerie conçue pour offrir une communication rapide directement depuis la console.
 
 ## Installation
 1. Clonez le dépôt :
     ```
-    git clone https://github.com/Soen-Kieffer/CommX/
+    git clone https://github.com/Soen-Kieffer/DeltaComm/
     ```
 2. Accédez au répertoire du projet :
     ```
-    cd CommX
+    cd DeltaComm
     ```
 3. Installer le serveur :\
     Windows:

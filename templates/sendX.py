@@ -100,8 +100,8 @@ class commandes():
             trans_client.send("OK".encode("utf-8"))
             file_path = os.path.join("temp", file_name)
             with open(file_path, "rb") as f:
-                content = f.read()
-            trans_client.send(content)
+                while chunk := f.read(BUFFER_SIZE):
+                    trans_client.send(chunk)
         else:
             trans_client.send("NO".encode("utf-8"))
 def encode_list(lst):
@@ -196,3 +196,4 @@ def handle_new_connection(client):
             print(f"Erreur lors de la connexion d'un client : {e}")
             client.close()
             return None
+

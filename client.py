@@ -5,6 +5,7 @@ import sys
 from datetime import *
 import ctypes
 
+BUFFER_SIZE=1024
 
 class Commandes:
     def __init__(self, serv_socket):
@@ -99,7 +100,14 @@ class Commandes:
         trans_socket.send(fileName.encode("utf-8"))
         reponse = trans_socket.recv(1024).decode("utf-8")
         if reponse == "OK":
-            content = trans_socket.recv(1024)
+            
+            content = b""
+            while True:
+                chunk = trans_socket.recv(BUFFER_SIZE)
+                if not chunk:
+                    break
+                content += chunk
+                
             file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "received", fileName))
             dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__),"received"))
             if not os.path.exists(dir_path):
@@ -108,6 +116,8 @@ class Commandes:
                 except PermissionError:
                     print("Erreur : Impossible de créer le dossier 'received'. Vérifiez les permissions.")
                     return
+            
+            
             with open(file_path, "wb") as f:
                 f.write(content)
             print(f"Fichier {fileName} téléchargé avec succès.")
@@ -249,57 +259,12 @@ with open(date_path, "x") as f:
     f.write("Voici les logs de la session :\n")
     f.write("========================================\n")
 
-
-# Constantes
-SERVEUR_HOSTNAME = "192.168.1.38"  # IP du serveur
-PORT = 8888  # Port du serveur
-BUFFER_SIZE = 1024
-
 # Variables globales
 background = False
 new = False
 
-"""
-serv_list_path = os.path.abspath(os.path.join(os.path.dirname(__file__),"serv_list.txt"))
-if not os.path.exists(serv_list_path):
-    open(serv_list_path, "x").close()
-    print("Aucun serveur ne semble etre enregistré.")
-    print("Veuillez entrer l'adresse IP du serveur :")
-    SERVEUR_HOSTNAME = input(">>> ")
-    new = True
-else:
-    with open(serv_list_path, "r") as f:
-        lines = f.readlines()
-        if len(lines) == 0:
-            print("Aucun serveur ne semble etre enregistré.")
-            print("Veuillez entrer l'adresse IP du serveur :")
-            SERVEUR_HOSTNAME = input(">>> ")
-            new = True
-        else:
-            serv_list = []
-            for i in lines:
-                serv_list.append(i.split(";"))
-            print("Voici les serveurs enregistrés :")
-            print("0. Ajouter un nouveau serveur")
-            for i, serv in enumerate(serv_list):
-                print(f"{i + 1}. {serv[0]}")
-            print("Veuillez entrer le numéro du serveur:")
-            choix = int(input(">>> "))-1
-            if choix == -1:
-                print("Veuillez entrer l'adresse IP du serveur :")
-                SERVEUR_HOSTNAME = input(">>> ")
-                new = True
-            if choix < 0 or choix >= len(serv_list):
-                print("Numéro invalide.")
-                print("Veuillez entrer l'adresse IP du serveur :")
-                SERVEUR_HOSTNAME = input(">>> ")
-                new = True
-            else:
-                SERVEUR_HOSTNAME = serv_list[choix][1][:-1]
-                print(f"|{SERVEUR_HOSTNAME}|")
-"""
 # Connexion au serveur
-SERVEUR_HOSTNAME = "172.20.10.3"
+SERVEUR_HOSTNAME = "127.0.0.1"
 PORT = 8888
 nameBrut = input("Quel est votre nom ? >>> ")
 name = nameBrut.encode("utf-8")
